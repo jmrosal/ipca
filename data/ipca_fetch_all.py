@@ -70,6 +70,3 @@ def update_db(period):
         df.to_csv('ipca.csv', index=True, header=True)
     else:
         _fetch_ipca(period).to_csv('ipca.csv', index=True, header=True, mode='w')
-
-
-update_db('last')
