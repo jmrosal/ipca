@@ -6,6 +6,10 @@
 ######################################################################
 from ibge import ibge_fetch
 import pandas as pd
+import os
+
+
+__all__ = ['update_db']
 
 
 # fetch data
@@ -21,8 +25,10 @@ def _fetch_data(serie, period):
     - dataframe
     '''
     address = "http://www.sidra.ibge.gov.br/api/values/t/1419" + \
-              "/p/{}/v/{}/c315/all/n1/1/f/a".format(period, serie)
-    df = pd.DataFrame(ibge_fetch([address]).stack())
+              "/p/{}/v/{}/c315/all/h/n/n1/1/f/a".format(period, serie)
+    df = pd.read_json(address).loc[:, ['D1C', "D3C", "V"]]
+    df["D1C"] = pd.to_datetime(df['D1C'], format="%Y%m")
+    df.set_index(['D1C', 'D3C'], inplace=True)
     df.index.names = ['date', 'items']
     df.columns = ['mom' if int(serie) == 63 else 'peso']
     return df
@@ -43,7 +49,7 @@ def _fetch_ipca(period):
     df_weight = _fetch_data(66, period)
     df_final = pd.merge(df_ch, df_weight,
                         right_index=True,
-                        left_index=True, how='outer')
+                        left_index=True, how='inner')
     return df_final
 
 
@@ -60,7 +66,10 @@ def update_db(period):
     if os.path.exists('ipca.csv'):
         dold = pd.read_csv('ipca.csv', index_col=[0, 1], parse_dates=[0])
         dnew = _fetch_ipca(period)
-        df = pd.concat([dold, dnew]).drop_duplicates().sortlevel(level=0)
+        df = pd.concat([dold, dnew]).drop_duplicates().sortlevel(0)
         df.to_csv('ipca.csv', index=True, header=True)
     else:
-        _fetch_ipca(period).to_csv('ipca.csv', index=True, header=True)
+        _fetch_ipca(period).to_csv('ipca.csv', index=True, header=True, mode='w')
+
+
+update_db('last')

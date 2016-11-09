@@ -11,7 +11,7 @@ import json
 __all__ = ['decomposition']
 
 
-_dipca = pd.read_csv('./ipca.csv', index_col = [0, 1], na_values=['...'])
+_dipca = pd.read_csv('./ipca.csv', index_col = [0, 1], na_values=['...']).drop_duplicates()
 _decompo = json.loads(open('./decomposition.json').read())
 
 
@@ -119,7 +119,7 @@ def decomposition(dat):
     consolidado = [serv, serv_core, duraveis, semi, nduraveis,
                    monitorados, livres, comercializaveis,
                    ncomercializaveis, core_ex0, core_ex1]
-    names = ['servicos', 'nucleo - servicos', 'duravies', 'semi-duraveis',
+    names = ['servicos', 'nucleo - servicos', 'duraveis', 'semi-duraveis',
              'nao-duraveis', 'monitorados', 'livres', 'tradables', 'non-tradables',
              'nucleo-ex0', 'nucleo-ex1']
     return pd.DataFrame(np.array([c(dat) for c in consolidado]).reshape(1, 11),
