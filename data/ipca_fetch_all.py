@@ -27,8 +27,8 @@ def _fetch_data(serie, period):
     address = "http://www.sidra.ibge.gov.br/api/values/t/1419" + \
               "/p/{}/v/{}/c315/all/h/n/n1/1/f/a".format(period, serie)
     df = pd.read_json(address).loc[:, ['D1C', "D3C", "V"]]
-    df_new = pd.DataFrame(df[['V']].T.values, columns = df['D3C'].values,
-                        index=[pd.to_datetime(period, format="%Y%m")])
+    df_new = pd.DataFrame(df[['V']].values, index = df['D3C'].T.values,
+                        columns=[pd.to_datetime(period, format="%Y%m")])
     df_new.index.name = 'date'
     return df_new
 
@@ -39,7 +39,8 @@ def _fetch_ipca(info, period):
     of that period.
     input:
     -----
-    - period: str (all, last, 12 last)
+    - info: str [mom, peso]
+    - period: str (201610)
     output:
     -----
     - dataframe
@@ -55,15 +56,19 @@ def update_db(dat_file, info, dat):
     and save it in csv file.
     input:
     -----
-    - period: str (all)
+    - dat_file: str
+    - info: str
+    - dat: str (all)
     output:
     - None
     '''
     if os.path.exists(dat_file):
-        dold = pd.read_csv(dat_file, index_col=[0], parse_dates=[0])
-        if not pd.to_datetime(dat, format="%Y%m") in dold.index:
+        dold = pd.read_csv(dat_file, index_col=[0])
+        d = pd.to_datetime(dat, format="%Y%m").strftime(format="%Y-%m-%d")
+        if not d in dold.columns[0]:
             dnew = _fetch_ipca(info, dat)
-            df = pd.merge(dold.T, dnew.T, left_index=True, right_index=True, how='outer')
-            (df.T).to_csv(dat_file, index=True, header=True)
+            df = pd.merge(dold, dnew,
+                          left_index=True, right_index=True, how='outer').sort_index(axis=1)
+            df.to_csv(dat_file, index=True, header=True)
     else:
         _fetch_ipca(info, dat).to_csv(dat_file, index=True, header=True, mode='w')
