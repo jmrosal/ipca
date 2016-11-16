@@ -1,3 +1,5 @@
 from ipca_fetch_all import update_db
 
-update_db('201601-201610')
+def update_all(dat):
+    update_db('ipca_mom.csv', 'mom', dat)
+    update_db('ipca_peso.csv', 'peso', dat)

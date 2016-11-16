@@ -11,11 +11,10 @@ import json
 __all__ = ['decomposition']
 
 
-_dipca = pd.read_csv('./ipca.csv', index_col = [0, 1], na_values=['...']).drop_duplicates()
 _decompo = json.loads(open('./decomposition.json').read())
 
 
-# help function
+# help functions
 def decomp(df, category, dat):
     '''
     returns index of given category of core
@@ -46,52 +45,52 @@ def weights(df, category, dat):
     ------
     - double
     '''
-    return  df['peso'].loc[dat].loc[category].sum()
+    return df['peso'].loc[dat].loc[category].sum()
 
 
-def _tradables_weights(dat):
-    return weights(_dipca, _decompo[0]['comercializaveis'], dat)
+def _tradables_weights(dipca, dat):
+    return weights(dipca, _decompo[0]['comercializaveis'], dat)
 
 
-def _monitored_weights(dat):
-    return weights(_dipca, _decompo[0]['monitorados'], dat)
+def _monitored_weights(dipca, dat):
+    return weights(dipca, _decompo[0]['monitorados'], dat)
 
 
-def _ipca(dat):
-    return _dipca['mom'].loc[dat].loc[7169]
+def _ipca(dipca, dat):
+    return dipca['mom'].loc[dat].loc[7169]
 
 
 # Functions to export
 # ok
-def serv(dat):
-    return decomp(_dipca, _decompo[0]['servicos'], dat)
+def serv(dipca, dat):
+    return decomp(dipca, _decompo[0]['servicos'], dat)
 
 # ok
-def serv_core(dat):
-    return decomp(_dipca, _decompo[0]['servicos_nucleo'], dat)
+def serv_core(dipca, dat):
+    return decomp(dipca, _decompo[0]['servicos_nucleo'], dat)
 
 # ok
-def duraveis(dat):
-    return decomp(_dipca, _decompo[0]['duraveis'], dat)
+def duraveis(dipca, dat):
+    return decomp(dipca, _decompo[0]['duraveis'], dat)
 
 # problemas
-def nduraveis(dat):
-    return decomp(_dipca, _decompo[0]['nao-duraveis'], dat)
+def nduraveis(dipca, dat):
+    return decomp(dipca, _decompo[0]['nao-duraveis'], dat)
 
 
 # problemas
-def semi(dat):
-    return decomp(_dipca, _decompo[0]['semiduraveis'], dat)
+def semi(dipca, dat):
+    return decomp(dipca, _decompo[0]['semiduraveis'], dat)
 
 
 #ok
-def monitorados(dat):
-    return decomp(_dipca, _decompo[0]['monitorados'], dat)
+def monitorados(dipca, dat):
+    return decomp(dipca, _decompo[0]['monitorados'], dat)
 
 
-def livres(dat):
+def livres(dipca, dat):
     p = _monitored_weights(dat)/100
-    return 1/(1-p) * (_ipca(dat) - p*monitorados(dat))
+    return 1/(1-p) * (dipca(dat) - p*monitorados(dat))
 
 
 # problemas
@@ -106,15 +105,15 @@ def livres(dat):
 #     return 1/(1 - p - q)*(_ipca(dat) - p*comercializaveis(dat) - q*monitorados(dat))
 
 # problemas
-def core_ex2(dat):
-    ex2 = decomp(_dipca, _decompo[0]['ex2'], dat)
-    p = weights(_dipca, _decompo[0]['ex2'], dat)/100
+def core_ex2(dipca, dat):
+    ex2 = decomp(dipca, _decompo[0]['ex2'], dat)
+    p = weights(_ipca, _decompo[0]['ex2'], dat)/100
     return (1/(1 - p)) * (_ipca(dat) - p * ex2)
 
 
 # consolidado
-def decomposition(dat):
-    consolidado = [serv, serv_core, duraveis, monitorados]
-    names = ['servicos', 'nucleo - servicos', 'duraveis', 'monitorados']
-    return pd.DataFrame(np.array([c(dat) for c in consolidado]).reshape(1, len(names)),
-                        index = [dat], columns = names)
+def decomposition(dipca, dat):
+    consolidado = [_ipca, serv, serv_core, duraveis, monitorados]
+    names = ['ipca', 'servicos', 'nucleo - servicos', 'duraveis', 'monitorados']
+    return pd.DataFrame(np.array([c(dipca, dat) for c in consolidado]).reshape(1, len(names)),
+                        index=[dat], columns=names)
